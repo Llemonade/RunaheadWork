@@ -1,3 +1,10 @@
+这个项目是基于https://github.com/kuczmmar/Running-ahead-of-memory-latency的修改版本。
+
+增加了/gem5/configs/runahead/Rewrite.py，这个文件是/gem5/configs/runahead/o3_2level.py的复制衍生版本，主要增加了对“--MaxInsts”命令的识别以指定最大指令执行数。
+
+修改了/gem5/run.sh 主要增加了对spec2006的一些benchmark的路径（这些bench不在本项目中，使用时请修改为你本地的bench路径），同时调整了gem5运行脚本，改变为ReWrite.py，增加对最大指令数的指定(这个参数可以在run.sh中修改)。
+
+在目前的测试中，原作者实现的Pre cpu 存在潜在的问题。
 # Runahead and Precise Runahead Execution implementation using system simulator [gem5](https://www.gem5.org/)
 This is the repository used for my final year projectduring my Computer Science degree at the University of Cambridge. 
 The project is fully described in my dissertation --- ''Running ahead of memory latency - processor runahead'', which can be found in this [repository](https://github.com/kuczmmar/Running-ahead-of-memory-latency).
