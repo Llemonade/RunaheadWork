@@ -41,10 +41,24 @@ QSORT_ARG='../benchmarks/cbench/automotive_qsort_data/1.dat,out/qsort_output.dat
 DIJKSTRA='./../benchmarks/cbench/network_dijkstra/src/a.out'
 DIJKSTRA_ARG='../benchmarks/cbench/network_dijkstra_data/1.dat'
  
+GCC='/home/frank/Desktop/Spec/benchspec/CPU2006/403.gcc/exe/gcc_base.amd64-m64-gcc42-nn' 
+GCC_ARG='/home/frank/Desktop/test.c'
+
+MCF='/home/frank/Desktop/Spec/benchspec/CPU2006/429.mcf/exe/mcf_base.amd64-m64-gcc42-nn' 
+MCF_ARG='/home/frank/Desktop/Spec/benchspec/CPU2006/429.mcf/data/ref/input/inp.in'
+
+SPECRAND='/home/frank/Desktop/Spec/benchspec/CPU2006/999.specrand/exe/specrand_base.amd64-m64-gcc42-nn' 
+SPECRAND_ARG='/home/frank/Desktop/Spec/benchspec/CPU2006/999.specrand/data/test/input/control' 
+
+OMNETPP='/home/frank/Desktop/Spec/benchspec/CPU2006/471.omnetpp/exe/omnetpp_base.amd64-m64-gcc42-nn' 
+OMNETPP_ARG= '/home/frank/Desktop/Spec/benchspec/CPU2006/471.omnetpp/data/test/input/omnetpp.ini' 
 
 # define paths to configuration files
 O3_TWO_LEVEL='configs/runahead/o3_2level.py'
+ReWrite='configs/runahead/rewrite.py'
 GEM='build/X86/gem5.opt'
+#Max Instrustions,default 1000000
+maxinsts=500000000
 
 BASE_DEBUG=""
 RA_DEBUG=""
@@ -66,7 +80,8 @@ run_base() {
   BASE_GEM_FLAGS="--stats-file=base/${NAME} --json-config=base/${NAME}_config.json ${BASE_DEBUG}"
   OUT="out/base_${NAME}.txt"
 
-  time $GEM $BASE_GEM_FLAGS $O3_TWO_LEVEL --mode=baseline --rob_size=$ROB --l2_size=$L2  $PROGRAM > $OUT
+  #time $GEM $BASE_GEM_FLAGS $O3_TWO_LEVEL --mode=baseline --rob_size=$ROB --l2_size=$L2  $PROGRAM > $OUT
+  time $GEM $BASE_GEM_FLAGS $ReWrite --mode=baseline --rob_size=$ROB --l2_size=$L2 --MaxInsts=$maxinsts $PROGRAM > $OUT
 }
 
 
@@ -79,7 +94,8 @@ run_run() {
   RA_GEM_FLAGS="--stats-file=run/${NAME} --json-config=run/${NAME}_config.json ${RA_DEBUG}"
   OUT="out/run_${NAME}.txt"
 
-  time $GEM $RA_GEM_FLAGS  $O3_TWO_LEVEL --mode=runahead   --rob_size=$ROB  --l2_size=$L2  $PROGRAM > $OUT
+  #time $GEM $RA_GEM_FLAGS  $O3_TWO_LEVEL --mode=runahead   --rob_size=$ROB  --l2_size=$L2  $PROGRAM > $OUT
+  time $GEM $RA_GEM_FLAGS  $ReWrite --mode=runahead   --rob_size=$ROB  --l2_size=$L2 --MaxInsts=$maxinsts $PROGRAM > $OUT
 }
 
 
@@ -92,7 +108,8 @@ run_pre() {
   PRE_GEM_FLAGS="--stats-file=pre/${NAME} --json-config=pre/${NAME}_config.json ${PRE_DEBUG}"
   OUT="out/pre_${NAME}.txt"
 
-  time $GEM $PRE_GEM_FLAGS  $O3_TWO_LEVEL --mode=pre  --rob_size=$ROB --l2_size=$L2 $ADD_FLAGS  $PROGRAM > $OUT
+#  time $GEM $PRE_GEM_FLAGS  $O3_TWO_LEVEL --mode=pre  --rob_size=$ROB --l2_size=$L2 $ADD_FLAGS  $PROGRAM > $OUT
+  time $GEM $PRE_GEM_FLAGS  $ReWrite --mode=pre  --rob_size=$ROB --l2_size=$L2 $ADD_FLAGS --MaxInsts=$maxinsts $PROGRAM > $OUT
 }
 
 
@@ -105,7 +122,7 @@ run_all_pre_options() {
 
 
 run_all() {
-  run_base "$@" &  run_run  "$@" &  run_pre  "$@"
+  run_base "$@" &  run_run  "$@" #&  run_pre  "$@"
 }
 
 
@@ -127,8 +144,10 @@ run_all_benchmarks() {
   # run_all         $BZIP2D_ARG   $L2 $ROB "bzip2d" $BZIP2D &
   # run_all         ""            $L2 $ROB "cg"     $CG &
   # run_all         $CONSUMER_ARG $L2 $ROB "consumer" $CONSUMER_LAME &
-  run_all         ""            $L2 $ROB "is"     $IS &
-  run_all         ""            $L2 $ROB "hj2" $HASHJOIN2
+  #run_all         ""            $L2 $ROB "is"     $IS &
+  #run_all         ""            $L2 $ROB "hj2" $HASHJOIN2
+  #run_all	$GCC_ARG $L2 $ROB "gcc" $GCC
+  run_all $MCF_ARG  $L2 $ROB "mcf" $MCF
 }
 
 
@@ -138,11 +157,11 @@ run_all_benchmarks() {
 mkdir -p out m5out/base m5out/run m5out/pre
 echo_lines
 
-ROBS=( 64 96 128 160 192 )
+ROBS=(  128  192 )
 L2S=( '64kB' '128kB' '256kB')
 
 for r in ${ROBS[@]}; do 
-  for l in ${L2S[@]}; do 
+ for l in ${L2S[@]}; do 
     echo $r, $l; run_all_benchmarks $l $r &
   done
 done
@@ -162,12 +181,21 @@ done
 
 ## Bzip2d
 # run_pre          $BZIP2D_ARG  '256kB' 160 "bzip2d" $BZIP2D
+# run_run          $MCF_ARG  '256kB' 160 "mcf" $MCF
 
-run_all "" '128kB' 96 "g500" $GRAPH500  & # RA crashes
-run_all "" '128kB' 96 "hj8" $HASHJOIN8  # RA crashes
+#run_all "" '128kB' 96 "g500" $GRAPH500  & # RA crashes
+#run_all "" '128kB' 96 "hj8" $HASHJOIN8  # RA crashes
 
+#run_all	$GCC_ARG '64kB' 64 "gcc" $GCC
+#run_all	$GCC_ARG '128kB' 64 "gcc" $GCC
+#run_all	$GCC_ARG '256kB' 64 "gcc" $GCC
+#run_all	$GCC_ARG '128kB' 128 "gcc" $GCC
+#run_all	$GCC_ARG '128kB' 160 "gcc" $GCC
+#run_all	$GCC_ARG '128kB' 192 "gcc" $GCC
+#run_all	$GCC_ARG '64kB' 160 "gcc" $GCC
+#run_all	$GCC_ARG '256kB' 160 "gcc" $GCC
 
-
+#run_pre $MCF_ARG  '128kB' 192 "mcf" $MCF
 
 wait
 wait
